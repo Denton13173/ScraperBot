@@ -1,5 +1,5 @@
-__pycache__/ 
-*.log 
-env/ 
-.vscode/ 
-.env 
+__pycache__/
+*.log
+env/
+.vscode/
+.env
