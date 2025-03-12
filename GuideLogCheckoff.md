@@ -1,0 +1,1089 @@
+# Personalized Step-by-Step Development Plan
+
+## Phase 1: Environment Setup & Tooling
+   - Python Python 3.11.6
+   - Git: https://github.com/Denton13173/ScraperBot
+   - VS Code 1.98.1.
+   - Docker 4.38.0
+
+
+2. **Virtual Environment**
+Here’s a rundown of how Python virtual environments work and why you might (or might not) use them in VS Code:
+
+Purpose of a virtual environment
+
+A virtual environment (venv) allows you to isolate your project’s Python packages from your global Python installation. This helps avoid version conflicts and keeps your project’s dependencies neatly separated from other projects on your system.
+Do you need to activate the virtual environment in VS Code?
+
+Yes, if you want VS Code’s terminal (and any integrated tools, like linters or the debugger) to use the Python interpreter and libraries that are installed in your virtual environment, then you should activate it in VS Code’s terminal. This ensures that when you run code or install packages, you’re doing so in the context of your isolated environment.
+Do you need to activate it every time you work on the bot?
+
+Yes, at least once per shell session. Every time you open a new terminal session (in VS Code or otherwise), you’ll need to activate the virtual environment if you plan to run or modify your bot code within that session. If you close and reopen VS Code, you’ll need to reactivate the environment in the new terminal session.
+Why activate it every time?
+
+Dependency isolation: Without activating the environment, Python may use your global system Python and installed packages, which can lead to version conflicts or missing modules.
+Accuracy: When you install dependencies with pip install, you want them installed inside bot_env, not system-wide. Activating ensures you install and use the correct packages.
+Workflow tips
+
+In VS Code, you can configure your Python interpreter to automatically point to the virtual environment by selecting the environment in the Command Palette (Ctrl + Shift + P or Cmd + Shift + P on macOS), then typing “Python: Select Interpreter” and choosing the environment’s Python interpreter from the list. This makes it easier for VS Code to run and debug your code in the correct environment.
+In some cases, once you set your Python interpreter at the workspace level, VS Code can automatically activate your environment for the integrated terminal. However, if you open additional terminals or open VS Code anew, you may still need to re-run the bot_env\Scripts\activate command (on Windows) in each new terminal.
+In summary, the virtual environment’s main purpose is to keep your project’s dependencies isolated, ensuring a consistent and reproducible development environment. You do need to activate it each time you open a new terminal session and want to work within that environment.
+
+Create your virtual environment and install libraries using `pip install`.
+   - Create and activate `bot_env`:
+     ```bash
+        - (Optional) Docker if you plan to containerize later.
+  # Windows
+     source bot_env/bin/activate  # Mac/Linux
+     ```
+
+3. **Dependency Installation**
+   - Install required libraries:
+     pip install discord.py python-dotenv pyautogui fuzzywuzzy scikit-learn joblib
+   
+4. **Version Control & Auto-Push**
+   - Github auto update installed, every 5 minutes push
+   - github manual push file "C:\Users\coryd\ScraperBot\git_auto_push.bat"
+     ```
+
+### Check Function
+- Verify Python, Git, and VS Code installations by running simple commands:
+      python --version
+      git --version
+      ### python: 3.11.6
+      ### git: 2.48.1.windows.1
+
+- Confirm virtual environment activation and library installs with: pip list
+    Package          Version
+   ---------------- -------
+   aiohappyeyeballs 2.6.0
+   aiohttp          3.11.13
+   aiosignal        1.3.2
+   attrs            25.1.0
+   discord.py       2.5.2
+   frozenlist       1.5.0
+   fuzzywuzzy       0.18.0
+   idna             3.10
+   joblib           1.4.2
+   MouseInfo        0.1.3
+   multidict        6.1.0
+   numpy            2.2.3
+   pillow           11.1.0
+   pip              25.0.1
+   propcache        0.3.0
+   PyAutoGUI        0.9.54
+   PyGetWindow      0.0.9
+   PyMsgBox         1.0.9
+   pyperclip        1.9.0
+   PyRect           0.2.0
+   PyScreeze        1.0.1
+   python-dotenv    1.0.1
+   pytweening       1.2.0
+   scikit-learn     1.6.1
+   scipy            1.15.2
+   setuptools       65.5.0
+   threadpoolctl    3.5.0
+   yarl             1.18.3
+
+## Phase 2: Bot Configuration & Basic Setup
+   - Check Bot Function
+         cd c:\Users\coryd\ScraperBot\minibots
+         bot_env\Scripts\activate
+         python IsTheBotInTheServer.py
+
+## Phase 3: Message Monitoring & Deal Extraction
+1. **Message Parsing**
+   - In `import_discord.py`, listen for new messages.
+   - Identify potential deal messages by looking for keywords (e.g., “deal”, “SKU”).
+   - Extract SKU, discount, and price data.
+
+**How to Do It:**
+1. Listen for events:
+   ```python
+   @bot.event
+   async def on_message(message):
+       if "deal" in message.content.lower():
+           # Extract SKU, discount, and price
+           ...
+   ```
+2. Use string operations or regex to parse SKUs and discounts.
+3. Cache valid deals in Python structures (dicts/lists).
+
+### Check Function
+
+1. **Post a Test “Deal” Message**
+
+**Test Message:** Deal! SKU: 12345, Discount: 20%, Price: $19.99
+**Expected Console/Log Output:** Deal found! SKU: 12345, Discount: 20%, Price: $19.99
+
+2. **Attempt Invalid Messages**
+**Test Message** Deal! SKU: ABCDE, Discount: 20%, Price: $19.99
+**Expected Console/Log Output:** Invalid deal data. Please provide valid SKU and discount.
+**Test Message**Deal! SKU: 12345, Discount: 200%, Price: $19.99
+**Expected Console/Log Output:**Invalid deal data. Please provide valid SKU and discount.
+**Test Message**Deal! SKU: 12345, Discount: 20%
+**Expected Console/Log Output:**Invalid deal format. Please provide SKU, discount, and price.
+
+
+
+
+## Phase 4: User Interactivity & Command Handling
+1. **ZIP Code Management**
+   - Implement `!setzip` and `!checkzip` commands:
+     - Save the user’s ZIP in a user preferences structure.
+     - Return the current ZIP on request.
+   - Extend this approach for other user-specific settings (e.g., store preferences).
+
+**How to Do It:**
+1. Use command prefixes, e.g., `!setzip` or `!checkzip`:
+   ```python
+   @bot.command()
+   async def setzip(ctx, zip_code):
+       user_id = ctx.author.id
+       user_prefs[user_id] = zip_code
+       await ctx.send(f"ZIP code set to {zip_code}")
+
+   @bot.command()
+   async def checkzip(ctx):
+       user_id = ctx.author.id
+       zip_code = user_prefs.get(user_id, "not set")
+       await ctx.send(f"Your ZIP code is {zip_code}")
+   ```
+2. Maintain a global or class-based dictionary with user IDs and settings.
+3. Validate inputs (ZIP format) and respond with success/failure messages.
+
+2. **Filtering Mechanisms**
+   - Filter deals by store, ZIP code relevance, and discount threshold.
+   - Provide user commands to set filters dynamically.
+
+3. **Real-Time Notifications**
+   - Send alerts when a high-interest deal is found (e.g., discount > 70%).
+   - Integrate scheduling to periodically check for updated prices.
+
+### Check Function
+- Use `!setzip 12345` to set a ZIP code, then `!checkzip` to confirm.
+- Confirm filtering logic by testing different discount thresholds and ZIP codes.
+- Inspect logs or console to ensure correct command execution.
+
+## Phase 5: Automated Forwarding & Category Management
+1. **Channel Forwarding**
+   - Automatically forward valid deals to a designated “Deals” channel using `allstores70.py`.
+   - Use `dealadd.py` to add deals with PyAutoGUI if needed.
+
+**How to Do It:**
+1. Use PyAutoGUI for typing commands into Discord if direct API usage is limited.
+2. Check if the channel exists; if not, create it automatically with the Discord API using the `validate_channel.py` script:
+   ```python
+   import discord
+   import asyncio
+
+   async def validate_channel(bot, guild_id, channel_name):
+       guild = bot.get_guild(guild_id)
+       channel = discord.utils.get(guild.channels, name=channel_name)
+       if not channel:
+           await guild.create_text_channel(channel_name)
+           print(f"Channel '{channel_name}' created.")
+       else:
+           print(f"Channel '{channel_name}' already exists.")
+
+   if __name__ == "__main__":
+       bot = discord.Client()
+       bot.run('YOUR_DISCORD_BOT_TOKEN')
+       asyncio.run(validate_channel(bot, YOUR_GUILD_ID, "deals"))
+   ```
+
+3. **Categorization**
+   - Apply scripts like `HIfilters.py` and `homeprovementfilterbot.py` for structured sorting.
+   - Group deals into categories (e.g., home improvement, hardware, tools).
+
+4. **Stock Summaries**
+   - Schedule daily stock summaries to each relevant Discord channel.
+   - Store historical data briefly, then purge records to keep memory usage low.
+
+### Check Function
+- Trigger an event that should forward a deal. Confirm it appears in the designated channel.
+- Verify new channel creation if none exists.
+- Check that categories (e.g., tools vs. furniture) are assigned correctly based on filtering scripts.
+
+## Phase 6: Advanced AI Features
+1. **NLP & Fuzzy Matching**
+   - Implement advanced text parsing for more accurate deal detection:
+     - Use fuzzy matching to catch partial matches (e.g., “Dewalt drill” ~ “DeWALT Drill”).
+   - Expand NLP capabilities for more context-based alerts.
+
+**How to Do It:**
+1. Implement fuzzy matching (e.g., `fuzzywuzzy` library) for partial text matches.
+2. Assign scores to deals based on discount, brand popularity, user interest.
+3. For persistent data, set up a simple SQLite or PostgreSQL database.
+
+2. **AI-Based Prioritization**
+   - Introduce a scoring system to highlight top-value deals.
+   - Potentially integrate a machine learning model to learn user preferences over time using the `train_model.py` script:
+     ```python
+     from sklearn.model_selection import train_test_split
+     from sklearn.ensemble import RandomForestClassifier
+     import joblib
+
+     def train_model(data):
+         X = data[['sku', 'discount']]
+         y = data['priority']
+         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+         model = RandomForestClassifier()
+         model.fit(X_train, y_train)
+         joblib.dump(model, 'deal_priority_model.pkl')
+         print("Model trained and saved.")
+
+     if __name__ == "__main__":
+         sample_data = [{'sku': '12345', 'discount': 50, 'priority': 1}, {'sku': '67890', 'discount': 30, 'priority': 0}]
+         train_model(sample_data)
+     ```
+
+3. **Persistent Data Storage**
+   - Migrate user data (ZIP codes, store preferences) to a database.
+   - Ensure the bot can restart without losing preferences or historical deal data.
+
+### Check Function
+- Manually test a fuzzy search scenario (e.g., “dril” vs. “drill”). Verify partial matches.
+- Inspect assigned scores or priority levels for deals.
+- Validate that data persists (or is prepared for persistence) in a chosen database.
+
+## Phase 7: Deployment & Continuous Operation
+1. **Cloud Hosting**
+   - Containerize code (optional) or deploy directly to Heroku, AWS, or another provider.
+   - Configure environment variables in the cloud environment.
+
+**How to Do It:**
+1. Choose a platform (Heroku/AWS/other) and configure environment variables there.
+2. Log major events and errors for troubleshooting using Python’s `logging` module with the `setup_logging.py` script:
+   ```python
+   import logging
+
+   def setup_logging():
+       logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+       logging.info("Logging setup complete.")
+
+   if __name__ == "__main__":
+       setup_logging()
+   ```
+
+3. Keep documentation updated in `README.md` and record changes in `Changelog.md` using the `generate_docs.py` script:
+   ```python
+   def generate_readme():
+       with open('README.md', 'w') as readme:
+           readme.write("# ScraperBot\n\n")
+           readme.write("## Setup Instructions\n")
+           readme.write("1. Install Python, Git, and VS Code.\n")
+           readme.write("2. Set up the virtual environment and install dependencies.\n")
+           readme.write("3. Configure the `.env` file with your Discord bot token.\n")
+           readme.write("4. Run the bot using `python import_discord1.py`.\n")
+           readme.write("\n## Features\n")
+           readme.write("- Message parsing and deal extraction.\n")
+           readme.write("- User interactivity and command handling.\n")
+           readme.write("- Automated forwarding and category management.\n")
+           readme.write("- Advanced AI features for deal prioritization.\n")
+
+   def generate_changelog():
+       with open('Changelog.md', 'w') as changelog:
+           changelog.write("# Changelog\n\n")
+           changelog.write("## [Unreleased]\n")
+           changelog.write("- Initial release.\n")
+
+   if __name__ == "__main__":
+       generate_readme()
+       generate_changelog()
+   ```
+
+### Check Function
+- Deploy to chosen platform (e.g., Heroku) and ensure bot remains online.
+- Test environment-specific variables (logs, error handling).
+- Review the updated `Changelog.md` to confirm each deployment step is documented.
+
+## Phase 8: Public Release & Maintenance
+1. **User Onboarding & Guides**
+   - Document common commands, customization options, and advanced features.
+   - Provide troubleshooting steps.
+
+**How to Do It:**
+1. Provide new server owners with instructions for adding your bot.
+2. Continuously refine filters, commands, and notifications based on feedback.
+3. Use Git auto-push or a CI/CD pipeline to deploy enhancements regularly.
+
+2. **Scheduled Updates**
+   - Continue to refine the NLP logic, add more store integrations, and enhance user personalization.
+   - Keep using GitHub auto-push or a CI/CD pipeline for continuous integration.
+
+### Check Function
+- Attempt adding the bot to a fresh Discord server using invite links or instructions in the README.
+- Validate that all major features (commands, deals, filters) still work in a new environment.
+- Confirm automated updates (Git auto-push, CI/CD) occur without issues.
+
+## Phase 9: Dynamic Self-Learning & Enhanced Intelligence
+1. **Data Gathering & Analysis**
+   - Location: A new module (`self_learning.py`) that logs user interactions, frequently accessed deals, and user feedback.
+   - Approach: Collect data on which deals users click or respond to, storing results in a database. Ensure anonymized or minimal personally identifiable storage.
+   - Most Robust Method: Use a time-stamped approach to track each event, allowing for easy trend analysis.
+
+2. **Behavioral Modeling**
+   - Location: Within `self_learning.py` or a dedicated sub-folder for AI scripts.
+   - Approach: Apply machine learning (ML) algorithms (e.g., scikit-learn or TensorFlow) to predict user interests based on past interactions.
+   - Most Robust Method: Continually retrain the model on newly gathered data, storing models in versioned formats (e.g., joblib or PMML).
+
+3. **Automated Tuning & Feedback Loops**
+   - Location: Integration across core bot scripts (deal extraction, user commands) to adjust thresholds dynamically.
+   - Approach: Let the bot automatically tweak discount thresholds or recommended deals as it gains data on user behavior.
+   - Most Robust Method: Keep a fallback for manual overrides if the ML model becomes skewed. Provide an admin command to reset or retrain.
+
+4. **Evolving Command & Conversation Handling**
+   - Location: Possibly integrate advanced NLP libraries, such as spaCy or transformers, to interpret user requests beyond simple commands.
+   - Approach: Extend `on_message` or add slash commands to interpret user queries (e.g., “Find me the best deals for a lawn mower under $200”).
+   - Most Robust Method: Use a pre-trained language model, fine-tuned on domain-specific phrases, for more natural conversation-like interactions.
+
+5. **SysOps & Monitoring**
+   - Location: Additional debug/logging modules tied to each self-learning step.
+   - Approach: Collect, store, and visualize metrics (e.g., error rates, user engagement) in real-time dashboards.
+   - Most Robust Method: Use an external monitoring service (Datadog, Grafana, AWS CloudWatch) for deeper insights and anomaly detection.
+
+### Check Function
+- After implementing each sub-step, run tests to confirm data is being recorded.
+- Inspect ML model predictions (e.g., output top 3 “best-matched deals” to confirm logic).
+- Verify the bot can handle new requests accurately and that any auto-tuning doesn’t disrupt existing features.
+
+## Phase 10: Mini-Bots and Automation Scripts
+
+To streamline the development process, the following mini-bots and scripts are recommended. These will help automate repetitive tasks, ensure consistency, and make the development process more efficient.
+
+1. **Environment Setup Script**
+   - Automates the installation of Python, Git, and VS Code extensions.
+   - Sets up the virtual environment and installs required libraries.
+
+**How to Do It:**
+1. Create a script named `setup_environment.cmd`:
+   ```cmd
+   @echo off
+   :: Install Python
+   echo Installing Python...
+   :: Add Python installation commands here
+
+   :: Install Git
+   echo Installing Git...
+   :: Add Git installation commands here
+
+  # Personalized Step-by-Step Development Plan
+
+## Phase 1: Environment Setup & Tooling
+1. **Install Prerequisites**
+   - Python (latest recommended version).
+   - Git and VS Code (with CoPilot enabled).
+   - (Optional) Docker if you plan to containerize later.
+
+**How to Do It:**
+1. Download & run the Python installer from [python.org](https://www.python.org/).
+2. Visit [git-scm.com](https://git-scm.com/) to install Git. Initialize a Git repository in the project folder:
+   ```bash
+   git init
+   ```
+3. In VS Code, enable Copilot from Extensions and sign in with GitHub.
+4. Create your virtual environment and install libraries using `pip install`.
+
+2. **Virtual Environment**
+   - Create and activate `bot_env`:
+     ```bash
+     python -m venv bot_env
+     bot_env\Scripts\activate  # Windows
+     source bot_env/bin/activate  # Mac/Linux
+     ```
+
+3. **Dependency Installation**
+   - Install required libraries:
+     ```bash
+     pip install discord.py python-dotenv pyautogui
+     ```
+
+4. **Version Control & Auto-Push**
+   - Initialize a local Git repository:
+     ```bash
+     git init
+     ```
+   - Create `git_auto_push.bat` to stage, commit, and push changes:
+     ```bat
+     @echo off
+     git add .
+     git commit -m "Auto commit"
+     git push
+     ```
+   - Schedule this script to run every 5 minutes via Task Scheduler or a cron job using the `schedule_git_auto_push.cmd` script:
+     ```cmd
+     @echo off
+     echo Scheduling Git auto-push script...
+     schtasks /create /tn "GitAutoPush" /tr "C:\Users\coryd\ScraperBot\git_auto_push.bat" /sc minute /mo 5 /f
+     echo Git auto-push script scheduled.
+     pause
+     ```
+
+### Check Function
+- Verify Python, Git, and VS Code installations by running simple commands:
+  ```bash
+  python --version
+  git --version
+  ```
+- Confirm virtual environment activation and library installs with:
+  ```bash
+  pip list
+  ```
+- Ensure Copilot is responding by creating a simple test file and letting Copilot suggest completions.
+
+## Phase 2: Bot Configuration & Basic Setup
+1. **Discord Developer Portal**
+   - Create an application, add a bot, and invite it to your server.
+   - Set permissions to allow for reading messages and message content.
+
+**How to Do It:**
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) -> Applications -> “New Application.”
+2. Enable “Message Content Intent” in the bot section.
+3. Store `DISCORD_BOT_TOKEN` in `.env`; access it via `dotenv.load_dotenv()` using the `manage_token.py` script:
+   ```python
+   import os
+
+   def update_token():
+       token = input("Enter your Discord Bot Token: ")
+       with open('.env', 'w') as env:
+           env_file.write(f"DISCORD_BOT_TOKEN={token}\n")
+       print("Token updated successfully.")
+
+   if __name__ == "__main__":
+       update_token()
+   ```
+
+2. **Create `.env` File**
+   - Store your `DISCORD_BOT_TOKEN` without exposing it in Git history.
+   - Load with `python-dotenv` in your main script:
+     ```python
+     import os
+     from dotenv import load_dotenv
+
+     load_dotenv()
+     TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+     ```
+
+3. **Basic Connection Code**
+   - Write a script (`import_discord1.py`) to authenticate and log in:
+     ```python
+     import discord
+     import os
+     from discord.ext import commands
+     from dotenv import load_dotenv
+
+     load_dotenv()
+     TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+
+     intents = discord.Intents.default()
+     intents.message_content = True
+     bot = commands.Bot(command_prefix="!", intents=intents)
+
+     @bot.event
+     async def on_ready():
+         print(f"Logged in as {bot.user}")
+
+     bot.run(TOKEN)
+     ```
+   - Use `ISTheBotInTheServer.py` to confirm the bot’s presence in your test server.
+   - Print a console message upon successful login.
+
+### Check Function
+- Confirm the bot’s online status by running the login script.
+- Validate that `.env` is loaded correctly by printing `os.getenv("DISCORD_BOT_TOKEN")` (no actual token displayed).
+- Observe the console message for “Logged in as [Bot Name].”
+
+## Phase 3: Message Monitoring & Deal Extraction
+1. **Message Parsing**
+   - In `import_discord1.py`, listen for new messages.
+   - Identify potential deal messages by looking for keywords (e.g., “deal”, “SKU”).
+   - Extract SKU, discount, and price data.
+
+**How to Do It:**
+1. Listen for events:
+   ```python
+   @bot.event
+   async def on_message(message):
+       if "deal" in message.content.lower():
+           # Extract SKU, discount, and price
+           ...
+   ```
+2. Use string operations or regex to parse SKUs and discounts.
+3. Cache valid deals in Python structures (dicts/lists).
+
+2. **Data Validation**
+   - Check if the message originates from supported channels.
+   - Validate numeric fields (e.g., ensure discount is within 0%–100%) using the `validate_deals.py` script:
+     ```python
+     def validate_deal(deal):
+         if not (0 <= deal['discount'] <= 100):
+             return False
+         if not deal['sku'].isdigit():
+             return False
+         return True
+
+     if __name__ == "__main__":
+         test_deal = {'sku': '12345', 'discount': 50}
+         print(validate_deal(test_deal))
+     ```
+
+3. **Storage of Extracted Deals**
+   - Store deals in an in-memory data structure (lists, dictionaries).
+   - Plan for potential migration to a database in a later phase using the `migrate_to_db.py` script:
+     ```python
+     import sqlite3
+
+     def migrate_data(deals):
+         conn = sqlite3.connect('deals.db')
+         c = conn.cursor()
+         c.execute('''CREATE TABLE IF NOT EXISTS deals (sku TEXT, discount INTEGER)''')
+         for deal in deals:
+             c.execute("INSERT INTO deals (sku, discount) VALUES (?, ?)", (deal['sku'], deal['discount']))
+         conn.commit()
+         conn.close()
+
+     if __name__ == "__main__":
+         sample_deals = [{'sku': '12345', 'discount': 50}, {'sku': '67890', 'discount': 30}]
+         migrate_data(sample_deals)
+     ```
+
+### Check Function
+- Post a test “deal” message in your Discord server; verify console/log output for SKU, discount, and price.
+- Attempt invalid messages; ensure they are not falsely identified as deals.
+- Print stored deals to confirm correct data parsing.
+
+## Phase 4: User Interactivity & Command Handling
+1. **ZIP Code Management**
+   - Implement `!setzip` and `!checkzip` commands:
+     - Save the user’s ZIP in a user preferences structure.
+     - Return the current ZIP on request.
+   - Extend this approach for other user-specific settings (e.g., store preferences).
+
+**How to Do It:**
+1. Use command prefixes, e.g., `!setzip` or `!checkzip`:
+   ```python
+   @bot.command()
+   async def setzip(ctx, zip_code):
+       user_id = ctx.author.id
+       user_prefs[user_id] = zip_code
+       await ctx.send(f"ZIP code set to {zip_code}")
+
+   @bot.command()
+   async def checkzip(ctx):
+       user_id = ctx.author.id
+       zip_code = user_prefs.get(user_id, "not set")
+       await ctx.send(f"Your ZIP code is {zip_code}")
+   ```
+2. Maintain a global or class-based dictionary with user IDs and settings.
+3. Validate inputs (ZIP format) and respond with success/failure messages.
+
+2. **Filtering Mechanisms**
+   - Filter deals by store, ZIP code relevance, and discount threshold.
+   - Provide user commands to set filters dynamically.
+
+3. **Real-Time Notifications**
+   - Send alerts when a high-interest deal is found (e.g., discount > 70%).
+   - Integrate scheduling to periodically check for updated prices.
+
+### Check Function
+- Use `!setzip 12345` to set a ZIP code, then `!checkzip` to confirm.
+- Confirm filtering logic by testing different discount thresholds and ZIP codes.
+- Inspect logs or console to ensure correct command execution.
+
+## Phase 5: Automated Forwarding & Category Management
+1. **Channel Forwarding**
+   - Automatically forward valid deals to a designated “Deals” channel using `allstores70.py`.
+   - Use `dealadd.py` to add deals with PyAutoGUI if needed.
+
+**How to Do It:**
+1. Use PyAutoGUI for typing commands into Discord if direct API usage is limited.
+2. Check if the channel exists; if not, create it automatically with the Discord API using the `validate_channel.py` script:
+   ```python
+   import discord
+   import asyncio
+
+   async def validate_channel(bot, guild_id, channel_name):
+       guild = bot.get_guild(guild_id)
+       channel = discord.utils.get(guild.channels, name=channel_name)
+       if not channel:
+           await guild.create_text_channel(channel_name)
+           print(f"Channel '{channel_name}' created.")
+       else:
+           print(f"Channel '{channel_name}' already exists.")
+
+   if __name__ == "__main__":
+       bot = discord.Client()
+       bot.run('YOUR_DISCORD_BOT_TOKEN')
+       asyncio.run(validate_channel(bot, YOUR_GUILD_ID, "deals"))
+   ```
+
+3. **Categorization**
+   - Apply scripts like `HIfilters.py` and `homeprovementfilterbot.py` for structured sorting.
+   - Group deals into categories (e.g., home improvement, hardware, tools).
+
+4. **Stock Summaries**
+   - Schedule daily stock summaries to each relevant Discord channel.
+   - Store historical data briefly, then purge records to keep memory usage low.
+
+### Check Function
+- Trigger an event that should forward a deal. Confirm it appears in the designated channel.
+- Verify new channel creation if none exists.
+- Check that categories (e.g., tools vs. furniture) are assigned correctly based on filtering scripts.
+
+## Phase 6: Advanced AI Features
+1. **NLP & Fuzzy Matching**
+   - Implement advanced text parsing for more accurate deal detection:
+     - Use fuzzy matching to catch partial matches (e.g., “Dewalt drill” ~ “DeWALT Drill”).
+   - Expand NLP capabilities for more context-based alerts.
+
+**How to Do It:**
+1. Implement fuzzy matching (e.g., `fuzzywuzzy` library) for partial text matches.
+2. Assign scores to deals based on discount, brand popularity, user interest.
+3. For persistent data, set up a simple SQLite or PostgreSQL database.
+
+2. **AI-Based Prioritization**
+   - Introduce a scoring system to highlight top-value deals.
+   - Potentially integrate a machine learning model to learn user preferences over time using the `train_model.py` script:
+     ```python
+     from sklearn.model_selection import train_test_split
+     from sklearn.ensemble import RandomForestClassifier
+     import joblib
+
+     def train_model(data):
+         X = data[['sku', 'discount']]
+         y = data['priority']
+         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+         model = RandomForestClassifier()
+         model.fit(X_train, y_train)
+         joblib.dump(model, 'deal_priority_model.pkl')
+         print("Model trained and saved.")
+
+     if __name__ == "__main__":
+         sample_data = [{'sku': '12345', 'discount': 50, 'priority': 1}, {'sku': '67890', 'discount': 30, 'priority': 0}]
+         train_model(sample_data)
+     ```
+
+3. **Persistent Data Storage**
+   - Migrate user data (ZIP codes, store preferences) to a database.
+   - Ensure the bot can restart without losing preferences or historical deal data.
+
+### Check Function
+- Manually test a fuzzy search scenario (e.g., “dril” vs. “drill”). Verify partial matches.
+- Inspect assigned scores or priority levels for deals.
+- Validate that data persists (or is prepared for persistence) in a chosen database.
+
+## Phase 7: Deployment & Continuous Operation
+1. **Cloud Hosting**
+   - Containerize code (optional) or deploy directly to Heroku, AWS, or another provider.
+   - Configure environment variables in the cloud environment.
+
+**How to Do It:**
+1. Choose a platform (Heroku/AWS/other) and configure environment variables there.
+2. Log major events and errors for troubleshooting using Python’s `logging` module with the `setup_logging.py` script:
+   ```python
+   import logging
+
+   def setup_logging():
+       logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+       logging.info("Logging setup complete.")
+
+   if __name__ == "__main__":
+       setup_logging()
+   ```
+
+3. Keep documentation updated in `README.md` and record changes in `Changelog.md` using the `generate_docs.py` script:
+   ```python
+   def generate_readme():
+       with open('README.md', 'w') as readme:
+           readme.write("# ScraperBot\n\n")
+           readme.write("## Setup Instructions\n")
+           readme.write("1. Install Python, Git, and VS Code.\n")
+           readme.write("2. Set up the virtual environment and install dependencies.\n")
+           readme.write("3. Configure the `.env` file with your Discord bot token.\n")
+           readme.write("4. Run the bot using `python import_discord1.py`.\n")
+           readme.write("\n## Features\n")
+           readme.write("- Message parsing and deal extraction.\n")
+           readme.write("- User interactivity and command handling.\n")
+           readme.write("- Automated forwarding and category management.\n")
+           readme.write("- Advanced AI features for deal prioritization.\n")
+
+   def generate_changelog():
+       with open('Changelog.md', 'w') as changelog:
+           changelog.write("# Changelog\n\n")
+           changelog.write("## [Unreleased]\n")
+           changelog.write("- Initial release.\n")
+
+   if __name__ == "__main__":
+       generate_readme()
+       generate_changelog()
+   ```
+
+### Check Function
+- Deploy to chosen platform (e.g., Heroku) and ensure bot remains online.
+- Test environment-specific variables (logs, error handling).
+- Review the updated `Changelog.md` to confirm each deployment step is documented.
+
+## Phase 8: Public Release & Maintenance
+1. **User Onboarding & Guides**
+   - Document common commands, customization options, and advanced features.
+   - Provide troubleshooting steps.
+
+**How to Do It:**
+1. Provide new server owners with instructions for adding your bot.
+2. Continuously refine filters, commands, and notifications based on feedback.
+3. Use Git auto-push or a CI/CD pipeline to deploy enhancements regularly.
+
+2. **Scheduled Updates**
+   - Continue to refine the NLP logic, add more store integrations, and enhance user personalization.
+   - Keep using GitHub auto-push or a CI/CD pipeline for continuous integration.
+
+### Check Function
+- Attempt adding the bot to a fresh Discord server using invite links or instructions in the README.
+- Validate that all major features (commands, deals, filters) still work in a new environment.
+- Confirm automated updates (Git auto-push, CI/CD) occur without issues.
+
+## Phase 9: Dynamic Self-Learning & Enhanced Intelligence
+1. **Data Gathering & Analysis**
+   - Location: A new module (`self_learning.py`) that logs user interactions, frequently accessed deals, and user feedback.
+   - Approach: Collect data on which deals users click or respond to, storing results in a database. Ensure anonymized or minimal personally identifiable storage.
+   - Most Robust Method: Use a time-stamped approach to track each event, allowing for easy trend analysis.
+
+2. **Behavioral Modeling**
+   - Location: Within `self_learning.py` or a dedicated sub-folder for AI scripts.
+   - Approach: Apply machine learning (ML) algorithms (e.g., scikit-learn or TensorFlow) to predict user interests based on past interactions.
+   - Most Robust Method: Continually retrain the model on newly gathered data, storing models in versioned formats (e.g., joblib or PMML).
+
+3. **Automated Tuning & Feedback Loops**
+   - Location: Integration across core bot scripts (deal extraction, user commands) to adjust thresholds dynamically.
+   - Approach: Let the bot automatically tweak discount thresholds or recommended deals as it gains data on user behavior.
+   - Most Robust Method: Keep a fallback for manual overrides if the ML model becomes skewed. Provide an admin command to reset or retrain.
+
+4. **Evolving Command & Conversation Handling**
+   - Location: Possibly integrate advanced NLP libraries, such as spaCy or transformers, to interpret user requests beyond simple commands.
+   - Approach: Extend `on_message` or add slash commands to interpret user queries (e.g., “Find me the best deals for a lawn mower under $200”).
+   - Most Robust Method: Use a pre-trained language model, fine-tuned on domain-specific phrases, for more natural conversation-like interactions.
+
+5. **SysOps & Monitoring**
+   - Location: Additional debug/logging modules tied to each self-learning step.
+   - Approach: Collect, store, and visualize metrics (e.g., error rates, user engagement) in real-time dashboards.
+   - Most Robust Method: Use an external monitoring service (Datadog, Grafana, AWS CloudWatch) for deeper insights and anomaly detection.
+
+### Check Function
+- After implementing each sub-step, run tests to confirm data is being recorded.
+- Inspect ML model predictions (e.g., output top 3 “best-matched deals” to confirm logic).
+- Verify the bot can handle new requests accurately and that any auto-tuning doesn’t disrupt existing features.
+
+## Phase 10: Mini-Bots and Automation Scripts
+
+To streamline the development process, the following mini-bots and scripts are recommended. These will help automate repetitive tasks, ensure consistency, and make the development process more efficient.
+
+1. **Environment Setup Script**
+   - Automates the installation of Python, Git, and VS Code extensions.
+   - Sets up the virtual environment and installs required libraries.
+
+**How to Do It:**
+1. Create a script named `setup_environment.cmd`:
+   ```cmd
+   @echo off
+   :: Install Python
+   echo Installing Python...
+   :: Add Python installation commands here
+
+   :: Install Git
+   echo Installing Git...
+   :: Add Git installation commands here
+
+   :: Install VS Code extensions
+   echo Installing VS Code extensions...
+   code --install-extension ms-python.python
+   code --install-extension github.copilot
+
+   :: Set up virtual environment
+   echo Setting up virtual environment...
+   python -m venv bot_env
+   bot_env\Scripts\activate
+   pip install discord.py python-dotenv pyautogui
+
+   echo Environment setup complete.
+   pause
+   ```
+
+2. **Git Auto-Push Scheduler**
+   - Automates the scheduling of the `git_auto_push.bat` script using Task Scheduler on Windows.
+
+**How to Do It:**
+1. Create a script named `schedule_git_auto_push.cmd`:
+   ```cmd
+   @echo off
+   echo Scheduling Git auto-push script...
+   schtasks /create /tn "GitAutoPush" /tr "C:\Users\coryd\ScraperBot\git_auto_push.bat" /sc minute /mo 5 /f
+   echo Git auto-push script scheduled.
+   pause
+   ```
+
+3. **Discord Bot Token Manager**
+   - Securely manages and updates the `DISCORD_BOT_TOKEN` in the `.env` file.
+
+**How to Do It:**
+1. Create a script named `manage_token.py`:
+   ```python
+   import os
+
+   def update_token():
+       token = input("Enter your Discord Bot Token: ")
+       with open('.env', 'w') as env_file:
+           env_file.write(f"DISCORD_BOT_TOKEN={token}\n")
+       print("Token updated successfully.")
+
+   if __name__ == "__main__":
+       update_token()
+   ```
+
+4. **Message Parsing Tester**
+   - Simulates sending messages to the Discord bot for testing message parsing and deal extraction.
+
+**How to Do It:**
+1. Create a script named `message_tester.py`:
+   ```python
+   import discord
+   import asyncio
+
+   async def send_test_message(bot, channel_id, content):
+       channel = bot.get_channel(channel_id)
+       await channel.send(content)
+
+   if __name__ == "__main__":
+       bot = discord.Client()
+       bot.run('YOUR_DISCORD_BOT_TOKEN')
+       asyncio.run(send_test_message(bot, YOUR_CHANNEL_ID, "Test deal message with SKU and discount"))
+   ```
+
+5. **Deal Validation Script**
+   - Validates the extracted deals by checking if they meet certain criteria (e.g., discount range, valid SKU format).
+
+**How to Do It:**
+1. Create a script named `validate_deals.py`:
+   ```python
+   def validate_deal(deal):
+       if not (0 <= deal['discount'] <= 100):
+           return False
+       if not deal['sku'].isdigit():
+           return False
+       return True
+
+   if __name__ == "__main__":
+       test_deal = {'sku': '12345', 'discount': 50}
+       print(validate_deal(test_deal))
+   ```
+
+6. **Database Migration Script**
+   - Migrates in-memory data structures to a database.
+
+**How to Do It:**
+1. Create a script named `migrate_to_db.py`:
+   ```python
+   import sqlite3
+
+   def migrate_data(deals):
+       conn = sqlite3.connect('deals.db')
+       c = conn.cursor()
+       c.execute('''CREATE TABLE IF NOT EXISTS deals (sku TEXT, discount INTEGER)''')
+       for deal in deals:
+           c.execute("INSERT INTO deals (sku, discount) VALUES (?, ?)", (deal['sku'], deal['discount']))
+       conn.commit()
+       conn.close()
+
+   if __name__ == "__main__":
+       sample_deals = [{'sku': '12345', 'discount': 50}, {'sku': '67890', 'discount': 30}]
+       migrate_data(sample_deals)
+   ```
+
+7. **User Command Tester**
+   - Simulates user commands (e.g., `!setzip`, `!checkzip`) and verifies the bot's responses.
+
+**How to Do It:**
+1. Create a script named `command_tester.py`:
+   ```python
+   import discord
+   import asyncio
+
+   async def send_command(bot, channel_id, command):
+       channel = bot.get_channel(channel_id)
+       await channel.send(command)
+
+   if __name__ == "__main__":
+       bot = discord.Client()
+       bot.run('YOUR_DISCORD_BOT_TOKEN')
+       asyncio.run(send_command(bot, YOUR_CHANNEL_ID, "!setzip 12345"))
+   ```
+
+8. **Channel Creation Validator**
+   - Checks if the designated "Deals" channel exists and creates it if it doesn't.
+
+**How to Do It:**
+1. Create a script named `validate_channel.py`:
+   ```python
+   import discord
+   import asyncio
+
+   async def validate_channel(bot, guild_id, channel_name):
+       guild = bot.get_guild(guild_id)
+       channel = discord.utils.get(guild.channels, name=channel_name)
+       if not channel:
+           await guild.create_text_channel(channel_name)
+           print(f"Channel '{channel_name}' created.")
+       else:
+           print(f"Channel '{channel_name}' already exists.")
+
+   if __name__ == "__main__":
+       bot = discord.Client()
+       bot.run('YOUR_DISCORD_BOT_TOKEN')
+       asyncio.run(validate_channel(bot, YOUR_GUILD_ID, "deals"))
+   ```
+
+9. **AI Model Trainer**
+   - Trains and updates the machine learning model used for deal prioritization.
+
+**How to Do It:**
+1. Create a script named `train_model.py`:
+   ```python
+   from sklearn.model_selection import train_test_split
+   from sklearn.ensemble import RandomForestClassifier
+   import joblib
+
+   def train_model(data):
+       X = data[['sku', 'discount']]
+       y = data['priority']
+       X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+       model = RandomForestClassifier()
+       model.fit(X_train, y_train)
+       joblib.dump(model, 'deal_priority_model.pkl')
+       print("Model trained and saved.")
+
+   if __name__ == "__main__":
+       sample_data = [{'sku': '12345', 'discount': 50, 'priority': 1}, {'sku': '67890', 'discount': 30, 'priority': 0}]
+       train_model(sample_data)
+   ```
+
+10. **Deployment Script**
+    - Automates the deployment of the bot to cloud platforms like Heroku or AWS.
+
+**How to Do It:**
+1. Create a script named `deploy_bot.sh`:
+   ```bash
+   #!/bin/bash
+   echo "Deploying bot to Heroku..."
+   heroku create
+   git push heroku main
+   heroku config:set DISCORD_BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
+   echo "Bot deployed successfully."
+   ```
+
+11. **Logging and Monitoring Setup**
+    - Sets up logging and monitoring for the bot.
+
+**How to Do It:**
+1. Create a script named `setup_logging.py`:
+   ```python
+   import logging
+
+   def setup_logging():
+       logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+       logging.info("Logging setup complete.")
+
+   if __name__ == "__main__":
+       setup_logging()
+   ```
+
+12. **Documentation Generator**
+    - Generates and updates documentation (e.g., README.md, Changelog.md) based on the current state of the project.
+
+**How to Do It:**
+1. Create a script named `generate_docs.py`:
+   ```python
+   def generate_readme():
+       with open('README.md', 'w') as readme:
+           readme.write("# ScraperBot\n\n")
+           readme.write("## Setup Instructions\n")
+           readme.write("1. Install Python, Git, and VS Code.\n")
+           readme.write("2. Set up the virtual environment and install dependencies.\n")
+           readme.write("3. Configure the `.env` file with your Discord bot token.\n")
+           readme.write("4. Run the bot using `python import_discord1.py`.\n")
+           readme.write("\n## Features\n")
+           readme.write("- Message parsing and deal extraction.\n")
+           readme.write("- User interactivity and command handling.\n")
+           readme.write("- Automated forwarding and category management.\n")
+           readme.write("- Advanced AI features for deal prioritization.\n")
+
+   def generate_changelog():
+       with open('Changelog.md', 'w') as changelog:
+           changelog.write("# Changelog\n\n")
+           changelog.write("## [Unreleased]\n")
+           changelog.write("- Initial release.\n")
+
+   if __name__ == "__main__":
+       generate_readme()
+       generate_changelog()
+   ```
+
+These mini-bots and scripts will help automate various aspects of the development process, making it easier to manage and maintain the ScraperBot project.
+
+### Check Function
+- After implementing each sub-step, run tests to confirm data is being recorded.
+- Inspect ML model predictions (e.g., output top 3 “best-matched deals” to confirm logic).
+- Verify the bot can handle new requests accurately and that any auto-tuning doesn’t disrupt existing features.
+
+## Additional Implementation Guidelines
+
+1. **Start Small & Test Often**
+   - Break major features into tiny tasks (e.g., extracting price, discount, etc.).
+   - Commit and push each working micro-feature for easy rollback if something breaks.
+
+2. **Use Branches for Bigger Features**
+   - Create a new Git branch (e.g., `feature/home-improvement-filters`) whenever adding significant functionality.
+   - Merge into main only when stable, ensuring the main branch remains reliable.
+
+3. **Embrace Logging & Debugging Early**
+   - Use Python’s `logging` module for granular status messages and error reporting.
+   - Wrap message-processing or critical operations in `try-except` blocks to log unexpected errors.
+
+4. **Maintain a Clear Configuration**
+   - Keep all configuration values (store names, discount ranges, PyAutoGUI coordinates) in a single config file or dictionary.
+   - Update one place to change settings across your entire bot.
+
+5. **Keep the .env File Organized**
+   - Consistent variable naming: `DISCORD_BOT_TOKEN`, `DB_HOST`, etc.
+   - Document each environment variable’s purpose in a README or config doc.
+   - Never hardcode sensitive info; ensure secrets stay out of source control.
+
+6. **Incremental GUI Additions**
+   - Start with a minimal GUI (e.g., “Start”/”Stop”) before adding advanced controls.
+   - Test each new button or feature as you add it, preserving previously stable code.
+
+7. **Write a Quickstart or “How to Run” Section**
+   - Summarize essential setup steps in your README.md (e.g., installing Python, configuring .env).
+   - Provide usage examples so new collaborators can start quickly without confusion.
+
+8. **Test with a Private Discord Server & Dedicated Channel**
+   - Keep testing spam contained in a dedicated channel.
+   - Consider a secondary test account for user-based testing (commands, role-based actions).
+
+9. **Document as You Go**
+   - Insert short inline comments where needed.
+   - Update the Changelog for each bug fix or feature addition.
+   - Use a wiki or extra .md files if the project grows beyond basic documentation.
+
+10. **Don’t Reinvent the Wheel**
+   - Rely on Copilot or references from existing Discord bots for routine tasks.
+   - Reuse standard design patterns (e.g., event-driven message handling, slash commands) to avoid duplicating efforts.
+
+**Key Takeaway**  
+Working incrementally, committing frequently, and maintaining clean configuration/logs will help you quickly identify and fix problems before they escalate. Incorporate each guideline alongside the phases of your development plan to ensure a stable, efficient ScraperBot.
+
+## Summary
+This expanded plan guides you from initial setup to advanced AI features. Follow each phase in order, ensuring stable incremental growth. Use CoPilot to assist with coding each step, and confirm functionality through testing before moving on.
+
+
+
+
